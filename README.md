@@ -16,9 +16,10 @@ src/       // 项目源码
 > import jdk source of decompile rt.jar
 > import jdk source of other source
 
-> rtsrc copy(8204) and replace(7388) to rt , then rt copy and not replace to rtsrc
+> rtsrc copy(8204) and replace(7388) to rt , then rt copy (13964) and not replace (7718) to rtsrc
 > new add (330) of rtsrc copy(8204) and replace(7388) to rt
 > modified (7388) of rtsrc copy(8204) and replace(7388) to rt
+> then new add (5240) rt copy (13964) and not replace (7718) to rtsrc
 
 > fix decompile source and compile test
 
